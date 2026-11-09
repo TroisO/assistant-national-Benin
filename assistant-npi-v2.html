@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Assistant des démarches – NPI</title>
+<style>
+:root{--bg:#fff;--sb:#f7f8f7;--tx:#16201b;--mu:#667069;--bd:#e4e8e5;--me:#f0f3f1;--g:#006b3f;--gs:#e3f2ea;--on:#fff;--red:#b3261e;--am:#fff1c2;--sh:0 4px 24px rgba(20,40,30,.09)}
+body[data-role=a]{--g:#1d4f91;--gs:#e4edf9}
+body[data-role=n]{--g:#8a5a00;--gs:#fbf0d9}
+@media(prefers-color-scheme:dark){:root{--bg:#171a18;--sb:#121513;--tx:#ecf0ed;--mu:#9aa5a0;--bd:#2c3330;--me:#262b28;--g:#3fbf85;--gs:#183326;--on:#06210f;--red:#ff8a80;--am:#3a3213;--sh:none}
+body[data-role=a]{--g:#74aef5;--gs:#17283f;--on:#07182e}body[data-role=n]{--g:#e3b34f;--gs:#3a2e12;--on:#2a1d00}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}[hidden]{display:none!important}
+body{background:var(--bg);color:var(--tx);font:16px/1.65 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--g);outline-offset:2px}
+.auth{min-height:100%;display:grid;place-items:center;padding:24px;position:relative;isolation:isolate;overflow:hidden}
+.auth:before{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(to right,#008751 0 33.333%,transparent 33.333%),linear-gradient(to bottom,#fcd116 0 50%,#e8112d 50% 100%);opacity:.11}
+.auth-card{width:min(100%,420px);text-align:center}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.25rem;font-weight:650;margin-bottom:28px}
+.flag{width:36px;height:24px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;overflow:hidden;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.2);flex:none}
+.flag .green{grid-row:1/3;background:#008751}.flag .yellow{background:#fcd116}.flag .red{background:#e8112d}.flag.small{width:28px;height:19px}
+.auth-card h1{font:600 1.8rem/1.2 Georgia,serif;margin:0 0 8px}.auth-intro{color:var(--mu);margin:0 0 24px}
+.auth-form{text-align:left}.auth-form label{display:block;font-size:.9rem;font-weight:600;margin:0 0 6px}
+.auth-form input,.auth-form select{width:100%;height:50px;border:1px solid var(--bd);border-radius:14px;padding:0 14px;background:var(--bg);color:var(--tx);font:inherit;margin-bottom:12px}
+.auth-submit{width:100%;height:48px;background:var(--g);color:var(--on);border:0;border-radius:14px;font-weight:600;margin-top:4px}
+.auth-err{color:var(--red);font-size:.88rem;min-height:1.3em;margin:0 0 6px}
+.auth-note{margin:24px 0 0;color:var(--mu);font-size:.78rem;line-height:1.5}
+.app{display:flex;height:100%}.mobile-menu-toggle,.nav-backdrop{display:none}
+aside{width:272px;background:var(--sb);border-right:1px solid var(--bd);padding:12px;display:flex;flex-direction:column;gap:4px}
+aside .logo{font-weight:700;display:flex;align-items:center;gap:10px;padding:6px 8px 12px;font-size:1.02rem}
+.nw{display:flex;align-items:center;gap:8px;border:0;background:none;border-radius:12px;padding:10px;text-align:left;font-weight:600}.nw:hover{background:var(--me)}
+.nw i{width:24px;height:24px;border-radius:50%;background:var(--g);color:var(--on);display:grid;place-items:center;font-style:normal;font-size:1.05rem;line-height:1}
+aside h3{font-size:.76rem;color:var(--mu);font-weight:600;margin:16px 10px 4px}
+aside .it{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;color:var(--tx);font-size:.92rem}
+aside .it span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}aside .it:hover,aside .it.on{background:var(--me)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mu);flex:none}.dot.ok{background:#1f9d5c}.dot.run{background:#e0a100}.dot.bad{background:var(--red)}
+.mecard{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-top:1px solid var(--bd)}
+.mecard div{flex:1;min-width:0;line-height:1.3}.mecard b{display:block;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mecard small{color:var(--mu)}
+.av{width:34px;height:34px;border-radius:50%;background:var(--g);color:var(--on);display:grid;place-items:center;font:700 .82rem/1 system-ui;flex:none}
+.logout{border:0;background:none;color:var(--mu);border-radius:8px;padding:6px 8px;font-size:.8rem}.logout:hover{background:var(--me)}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+header{display:flex;align-items:center;gap:10px;padding:10px 18px;min-height:56px}
+header b{font-weight:600}.chip{font-size:.8rem;color:var(--g);background:var(--gs);border-radius:99px;padding:3px 12px;margin-left:auto}
+.pane{flex:1;display:flex;flex-direction:column;min-height:0}
+.scroll{flex:1;order:1;overflow:auto;padding:8px 18px 24px}
+.thread,.wel{max-width:740px;margin:0 auto}
+.wel{text-align:center}.wel h1{font:500 2.1rem/1.2 Georgia,serif;margin:0 0 8px}.wel p{color:var(--mu);margin:0 0 6px}
+.pane:not(.empty) .wel{display:none}
+.pane.empty{justify-content:center;padding-bottom:6vh}.pane.empty .scroll{flex:none;overflow:visible;padding:0 18px 22px}.pane.empty .thread{display:none}
+.comp{order:3;padding:0 18px 10px}.dock{order:2;padding:0 18px 8px}.pane.empty .comp{order:2}.pane.empty .dock{order:3}
+.chips{display:flex;flex-wrap:wrap;gap:8px;max-width:740px;margin:0 auto}.pane.empty .chips{justify-content:center;margin-top:4px}
+.chips button{background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:7px 14px;font-size:.88rem;color:var(--mu)}.chips button:hover{background:var(--me);color:var(--tx)}
+.pane.empty .chips button{padding:10px 16px}
+.msg{margin:0 0 26px;animation:in .25s ease}@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.msg.me{background:var(--me);border-radius:22px 22px 6px 22px;padding:10px 18px;max-width:80%;margin-left:auto;width:fit-content;white-space:pre-wrap}
+.msg.bot{display:flex;gap:14px;align-items:flex-start}.bd{flex:1;min-width:0;white-space:pre-wrap;font-size:1.02rem;padding-top:2px}.bd>*{white-space:normal}
+.ai{width:30px;height:30px;border-radius:50%;flex:none;border:1px solid var(--bd);background:linear-gradient(90deg,#008751 0 42%,transparent 42%),linear-gradient(#fcd116 50%,#e8112d 50%);position:relative}
+.ai:after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 3px var(--bg)}
+details.work{margin:10px 0;border:1px solid var(--bd);border-radius:14px;padding:4px 14px;font-size:.92rem;color:var(--mu);background:var(--sb)}
+details.work summary{cursor:pointer;padding:6px 0;font-weight:600;color:var(--tx)}
+details.work ul{list-style:none;margin:4px 0 6px;padding:0 0 0 2px}
+details.work li{padding:4px 0 8px 30px;position:relative;color:var(--tx)}
+details.work li:not(:last-child):after{content:"";position:absolute;left:10px;top:26px;bottom:-2px;width:2px;background:var(--bd)}
+details.work li small{display:block;font-size:.84rem;color:var(--mu)}
+li.run{opacity:.85}li.run:before{content:"";position:absolute;left:3px;top:7px;width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite}
+li.ok:before,li.warn:before{position:absolute;left:3px;top:5px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;font-weight:700}
+li.ok:before{content:"✓";background:var(--g);color:var(--on)}li.warn:before{content:"!";background:var(--red);color:#fff}
+@keyframes sp{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){li.run:before,.msg{animation:none}}
+.box{margin-top:12px;border:1px solid var(--bd);border-radius:18px;padding:14px 18px;font-size:.94rem;background:var(--bg);box-shadow:var(--sh)}
+.box table{width:100%;border-collapse:collapse;margin:8px 0}.box td{padding:6px 8px 6px 0;border-bottom:1px solid var(--bd)}.box td:last-child{text-align:right;white-space:nowrap}
+.plist{display:grid;gap:8px;margin-top:10px}
+.pc{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;width:100%;min-width:0;text-align:left;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:14px;padding:12px 14px}
+.pc:hover:not(:disabled),.pc:focus-visible{border-color:var(--g);background:var(--gs)}
+.pc:disabled{opacity:.6;cursor:default}.pc>*{min-width:0;overflow-wrap:anywhere}.pc small{color:var(--mu)}.pc .tag{width:fit-content;max-width:100%;border-radius:99px;padding:1px 8px;background:var(--gs);color:var(--g);font-size:.78rem;font-weight:600}
+.countdown-wrap{display:flex;align-items:center;gap:10px;margin-top:10px}
+.countdown{border:1px solid var(--bd);border-radius:99px;background:var(--gs);color:var(--g);padding:3px 11px;font:600 .9rem/1.5 ui-monospace,monospace}
+.grade-card{margin-top:10px;border:1px solid var(--bd);border-radius:16px;padding:14px;background:var(--bg)}
+.grade-card>p{margin:0 0 10px;color:var(--mu);font-size:.86rem}
+.grade-list{display:grid;gap:8px}
+.grade-row{border-bottom:1px solid var(--bd);padding:0 0 8px}
+.grade-row b{display:block}
+.grade-row small{color:var(--mu)}
+.grade-formula,.grade-average{margin-top:12px;font-weight:650}
+.grade-average{border-radius:12px;background:var(--gs);padding:10px 12px;color:var(--g)}
+.grade-pass{margin:6px 0 0}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.seg button{border:1px solid var(--bd);background:none;border-radius:99px;padding:6px 14px;font-size:.88rem}
+.seg button.on{border-color:var(--g);background:var(--gs);color:var(--g);font-weight:600}
+.doc{margin-top:12px;border:1px solid var(--bd);border-left:5px solid var(--g);border-radius:18px;padding:14px 18px;display:flex;gap:16px;align-items:center;box-shadow:var(--sh)}
+.seal{display:inline-block;font-size:.76rem;font-weight:600;color:var(--g);background:var(--gs);border-radius:99px;padding:1px 10px;margin-bottom:2px}
+.qr{background:#fff;color:#000;padding:5px;border-radius:8px;flex:none;border:1px solid var(--bd)}
+.btn{margin-top:10px;margin-right:6px;background:var(--g);color:var(--on);border:0;border-radius:99px;padding:9px 18px;font-weight:600}
+.btn.alt{background:none;color:var(--g);border:1px solid var(--g)}.btn.no{background:none;color:var(--red);border:1px solid var(--red)}.btn:disabled{opacity:.5;cursor:default}
+.sev{font-size:.78rem;border-radius:99px;padding:1px 10px;background:var(--am);margin-left:8px}.sev.s{background:var(--red);color:#fff}
+mark{background:var(--am);color:inherit;border-radius:4px;padding:0 3px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.cmp div{background:var(--sb);border:1px solid var(--bd);border-radius:12px;padding:10px}
+.ia{background:var(--gs);border-radius:12px;padding:10px 12px;margin:8px 0}
+.rj input{height:40px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit;padding:0 12px;margin-top:8px}
+.bar{height:10px;border-radius:5px;background:var(--bd);margin:3px 0 8px}.bar i{display:block;height:100%;border-radius:5px;background:var(--g)}.bar.o i{background:var(--red)}
+.in{max-width:740px;margin:0 auto;display:flex;align-items:flex-end;gap:6px;border:1px solid var(--bd);border-radius:30px;padding:10px 10px 10px 22px;box-shadow:var(--sh);background:var(--bg)}
+.in:focus-within{border-color:var(--g)}
+textarea{flex:1;border:0;outline:0;resize:none;background:none;color:var(--tx);font:inherit;max-height:160px;padding:6px 0}
+.ic{width:40px;height:40px;border-radius:50%;border:0;background:none;display:grid;place-items:center;flex:none;color:var(--mu)}.ic:hover{background:var(--me)}
+.ic.send{background:var(--g);color:var(--on)}.ic.send:disabled{background:var(--me);color:var(--mu);cursor:default}.ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.disc{text-align:center;color:var(--mu);font-size:.76rem;margin-top:10px}
+@media(max-width:800px){
+ aside{position:fixed;z-index:21;inset:0 auto 0 0;width:min(290px,86vw);height:100dvh;overflow-y:auto;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--sh)}
+ .app.menu-open aside{transform:none}
+ .mobile-menu-toggle{width:40px;height:40px;border:0;border-radius:10px;background:none;display:grid;place-items:center}
+ .mobile-menu-toggle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+ .nav-backdrop:not([hidden]){display:block;position:fixed;z-index:20;inset:0;border:0;background:rgba(0,0,0,.38)}
+ .doc{flex-direction:column;align-items:flex-start}.wel h1{font-size:1.7rem}.cmp{grid-template-columns:1fr}}
+</style></head><body>
+<section class="auth" id="auth"><div class="auth-card">
+<div class="auth-logo"><span class="flag" role="img" aria-label="Drapeau du Bénin"><i class="green"></i><i class="yellow"></i><i class="red"></i></span>BENIN</div>
+<h1>Se connecter</h1><p class="auth-intro" id="aIntro">Accédez à votre espace avec votre NPI.</p>
+<form class="auth-form" id="aForm" novalidate>
+<label for="aid">NPI ou identifiant professionnel</label>
+<input id="aid" autocomplete="username" placeholder="NPI à 10 chiffres">
+<div id="aOtp" hidden>
+<div id="aCh" hidden><label for="ach">Recevoir le code par</label><select id="ach"><option>SMS</option><option>E-mail</option></select></div>
+<label for="aotp">Code à 6 chiffres</label><input id="aotp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456"></div>
+<p class="auth-err" id="aErr" role="alert"></p>
+<button class="auth-submit" id="aBtn" type="submit">Continuer</button></form>
+<p class="auth-note">Démonstration : usager = un NPI de 10 chiffres ; agent = agent@demonstration.bj ; notaire = notaire@demonstration.bj. Code de confirmation : 123456. Aucune donnée réelle. Les démarches de démonstration sont enregistrées dans ce navigateur.</p>
+</div></section>
+<div class="app" id="app" hidden>
+<button class="nav-backdrop" id="bk" type="button" aria-label="Fermer le menu" hidden></button>
+<aside id="nav" aria-label="Navigation principale" inert>
+<div class="logo"><span class="flag small" role="img" aria-label="Drapeau du Bénin"><i class="green"></i><i class="yellow"></i><i class="red"></i></span>BENIN</div>
+<button class="nw" id="nwb"><i aria-hidden="true">+</i>Nouvelle conversation</button>
+<h3 id="lt"></h3><div id="list"></div>
+<div class="mecard"><i class="av" id="meAv"></i><div><b id="meN"></b><small id="meR"></small></div><button class="logout" id="out" type="button">Quitter</button></div></aside>
+<main id="main"><header>
+<button class="mobile-menu-toggle" id="mm" type="button" aria-label="Ouvrir le menu" aria-controls="nav" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<b id="ttl"></b><span class="chip" id="chip"></span></header></main></div>
+<script>
+const $=(s,r=document)=>r.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const tx=(t,s)=>{const e=document.createElement(t);e.textContent=s;return e};
+const fmt=n=>n.toLocaleString('fr-FR')+' FCFA';
+const STORAGE_KEY='assistant-npi-demo-v1';
+const PARCELLES=[
+ {n:'4521',doc:'TF',tf:'TF n° 12 345',lot:'Lot 27',lieu:'Quartier A',surf:'600 m²',ecart:1},
+ {n:'3307',doc:'TF',tf:'TF n° 8 902',lot:'Lot 14',lieu:'Quartier B',surf:'450 m²'},
+ {n:'5890',doc:'ADC',tf:'Attestation de détention coutumière',lot:'Parcelle rurale',lieu:'Village C',surf:'1 200 m²'}];
+const initialCases=[
+{t:'Casier judiciaire : orthographe du nom',sev:'Légère',a:'HOUNKPATI<mark>N</mark>',b:'HOUNKPATI',ia:'Faute de frappe probable (une lettre). Recommandation : valider.'},
+{t:'Casier judiciaire : homonyme possible',sev:'Sensible',s:1,a:'Né le 12/03/1988',b:'<mark>Né le 04/09/1982</mark> (même nom)',ia:'Probablement un homonyme. Recommandation : demander la filiation avant de délivrer.'}];
+function loadState(){const initial={role:null,npi:'',items:[],land:'none',landDecision:null,parcel:null,susp:false,audit:[],cases:initialCases};
+ try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return initial;
+  return {...initial,npi:typeof saved.npi=='string'?saved.npi:'',items:Array.isArray(saved.items)?saved.items:[],
+   land:['none','ecart','notaire','signe'].includes(saved.land)?saved.land:'none',
+   landDecision:saved.landDecision&&typeof saved.landDecision.message=='string'?saved.landDecision:null,
+   parcel:PARCELLES.find(x=>x.n===(saved.parcel&&saved.parcel.n))||(saved.land&&saved.land!='none'?PARCELLES[0]:null),
+   susp:!!saved.susp,audit:Array.isArray(saved.audit)?saved.audit:[],cases:Array.isArray(saved.cases)?saved.cases:initialCases};
+ }catch(error){console.error('Impossible de restaurer les données locales de la démonstration.',error);return initial}}
+const S=loadState();
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({npi:S.npi,items:S.items,land:S.land,landDecision:S.landDecision,parcel:S.parcel,susp:S.susp,audit:S.audit,cases:S.cases}))}
+ catch(error){console.error('Impossible d’enregistrer les données locales de la démonstration.',error)}}
+const R={
+u:{name:'Afi KOSSOU',chip:'Usager',ttl:'Mes démarches',lt:'Mes démarches',h:'Bonjour Afi. Que puis-je faire pour vous ?',w:'Je m’occupe de tout. Vous ne validez que les paiements.',ch:['Je veux voyager le mois prochain','Je veux vendre ma parcelle','Mon résultat au BEPC','J’ai besoin de mon casier judiciaire']},
+a:{name:'Agent ANDF',chip:'Agent',ttl:'Examen des dossiers',lt:'Mon espace',h:'Dossiers à examiner',w:'Je traite seul les dossiers sans écart. Vous voyez ici les exceptions.',ch:['Dossiers en attente','Journal d’audit','Voir l’impact','Suspendre ou rétablir l’autonomie']},
+n:{name:'Me Dossou',chip:'Notaire',ttl:'Actes à signer',lt:'Mon étude',h:'Actes à signer',w:'Je prépare chaque acte. Vous constatez le consentement et signez avec votre clé.',ch:['Actes en attente']}};
+const P={};
+const audit=t=>{S.audit.unshift(new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' · '+t);saveState()};
+const ICON={mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',send:'<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'};
+for(const k in R){const r=R[k],pn=el('section','pane','<div class="scroll"><div class="wel"><h1></h1><p></p></div><div class="thread"></div></div><div class="dock"><div class="chips"></div></div><div class="comp"><div class="in"><textarea rows="1" aria-label="Message" placeholder="Écrivez ce dont vous avez besoin…"></textarea><button class="ic mic" type="button" title="Dicter" aria-label="Dicter">'+ICON.mic+'</button><button class="ic send" type="button" disabled title="Envoyer" aria-label="Envoyer">'+ICON.send+'</button></div><div class="disc">Démonstration : l’assistant prépare, un humain décide et signe.</div></div>');
+ pn.hidden=true;pn.classList.add('empty');$('#main').append(pn);
+ const p=P[k]={pn,thread:$('.thread',pn),sc:$('.scroll',pn),wel:$('.wel',pn),ta:$('textarea',pn),busy:false,seen:false,cancelWait:null};
+ $('h1',pn).textContent=r.h;$('.wel p',pn).textContent=r.w;
+ r.ch.forEach(t=>{const b=tx('button',t);b.type='button';b.onclick=()=>send(k,t);$('.chips',pn).append(b)});
+ const sd=$('.send',pn),go=()=>{const v=p.ta.value;p.ta.value='';p.ta.style.height='auto';sd.disabled=true;send(k,v)};
+ $('.send',pn).onclick=go;
+ p.ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}};
+ p.ta.oninput=()=>{sd.disabled=!p.ta.value.trim();p.ta.style.height='auto';p.ta.style.height=p.ta.scrollHeight+'px'};
+ $('.mic',pn).onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){bot(k,'La dictée n’est pas disponible sur ce navigateur. Écrivez votre demande.');return}
+  const rc=new SR();rc.lang='fr-FR';rc.onresult=e=>{p.ta.value=e.results[0][0].transcript;p.ta.focus()};rc.onerror=()=>bot(k,'Je n’ai pas pu entendre. Réessayez ou écrivez.');rc.start()}}
+const sc=k=>{P[k].sc.scrollTop=P[k].sc.scrollHeight};
+function bot(k,c){const m=el('div','msg bot','<i class="ai" aria-hidden="true"></i><div class="bd"></div>'),b=m.lastChild;
+ if(c instanceof Node)b.append(c);else if(c)b.textContent=c;P[k].thread.append(m);P[k].pn.classList.remove('empty');sc(k);return b}
+function me(k,t){const m=el('div','msg me');m.textContent=t;P[k].thread.append(m);P[k].pn.classList.remove('empty');sc(k)}
+async function work(k,title,steps){const b=bot(k),d=el('details','work','<summary></summary><ul></ul>');d.open=true;$('summary',d).textContent=title;b.append(d);const ul=$('ul',d);
+ for(const [l,det,w] of steps){const li=el('li','run');li.textContent=l;ul.append(li);sc(k);await sleep(850);
+  li.className=w?'warn':'ok';li.append(tx('small',det));audit('Assistant : '+l);sc(k)}
+ $('summary',d).textContent=title+' · '+steps.length+(steps.length>1?' étapes':' étape')}
+function pay(k,items,cb){const tot=items.reduce((a,i)=>a+i[1],0),bx=el('div','box','<b>Paiement à valider</b><table>'+items.map(i=>'<tr><td>'+i[0]+'</td><td>'+fmt(i[1])+'</td></tr>').join('')+'<tr><td><b>Total</b></td><td><b>'+fmt(tot)+'</b></td></tr></table><div class="seg" role="group" aria-label="Opérateur"><button type="button" class="on" aria-pressed="true">MTN MoMo</button><button type="button" aria-pressed="false">Moov Money</button><button type="button" aria-pressed="false">Celtiis Cash</button></div><button class="btn">Valider le paiement de '+fmt(tot)+'</button><br><small>Montants de démonstration.</small>');
+ bx.querySelectorAll('.seg button').forEach(o=>o.onclick=()=>bx.querySelectorAll('.seg button').forEach(x=>{x.classList.toggle('on',x==o);x.setAttribute('aria-pressed',x==o)}));
+ const b=$('.btn',bx);b.onclick=async()=>{b.disabled=true;b.textContent='Paiement validé ✓';audit('Usager : paiement de '+fmt(tot)+' validé');await sleep(500);await cb()};bot(k,bx)}
+function qr(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;let r='';
+ for(let y=0;y<21;y++)for(let x=0;x<21;x++){let on;
+  if((x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13)){const a=x<7?x:x-14,b=y<7?y:y-14;on=a==0||a==6||b==0||b==6||(a>1&&a<5&&b>1&&b<5)}
+  else{h=(h*1103515245+12345)>>>0;on=(h>>>16)&1}
+  if(on)r+='<rect x="'+x+'" y="'+y+'" width="1" height="1"/>'}
+ return '<div class="qr"><svg viewBox="-1 -1 23 23" width="84" height="84" role="img" aria-label="QR code de vérification" fill="currentColor">'+r+'</svg></div>'}
+function doc(k,t,o){const ref='BJ-'+Math.random().toString(36).slice(2,8).toUpperCase(),d=el('div','doc',qr(ref)+'<div><span class="seal">✓ Document authentique</span><br><b></b><div class="mu" style="color:var(--mu);font-size:.88rem"></div><button class="btn alt">Télécharger</button></div>');
+ $('b',d).textContent=t;$('.mu',d).textContent='Cachet électronique : '+o+'. Référence de démonstration '+ref+'.';
+ const b=$('button',d);b.onclick=()=>{b.textContent='Téléchargé (simulé) ✓'};bot(k,d);audit('Document délivré : '+t+' ('+ref+')')}
+const item=(t,s)=>{const i={t,s};S.items.unshift(i);renderNav();return i};
+/* parcours usager */
+const FL={
+async travel(){const it=item('Voyage','en cours');bot('u','Très bien, je m’occupe de votre voyage.');
+ await work('u','Travail de l’assistant',[
+ ['Dossier lu avec votre NPI','Sources : état civil, passeport. Votre passeport expire le 14/12/2026 : renouvellement conseillé.'],
+ ['Acte de naissance récupéré','Obtenu au registre d’état civil, cachet électronique de l’organisme apposé.'],
+ ['Casier judiciaire obtenu','Aucun écart : délivré sans intervention humaine.'],
+ ['Demande de passeport préparée','Formulaire prérempli depuis le registre. Aucune pièce à fournir.'],
+ ['Créneau d’empreintes réservé','Seule étape physique : jeudi 26 novembre, 9 h 30, centre de démonstration. Rappel par SMS la veille.']]);
+ bot('u','Tout est prêt. Il ne reste que le paiement, que vous validez vous-même.');
+ pay('u',[['Acte de naissance',1000],['Casier judiciaire',2000],['Passeport (renouvellement)',50000]],async()=>{
+  bot('u','Paiement reçu. Voici vos documents.');doc('u','Acte de naissance','état civil');doc('u','Casier judiciaire','Centre national du casier');doc('u','Récépissé de demande de passeport','Direction du passeport');
+  bot('u','Bon voyage ! Je vous rappelle votre rendez-vous d’empreintes la veille.');it.s='terminé';renderNav()})},
+async casier(){const it=item('Casier judiciaire','en cours');
+ await work('u','Travail de l’assistant',[['Identité vérifiée avec votre NPI','Aucune pièce demandée.'],['Casier consulté','Aucun écart détecté.']]);
+ pay('u',[['Casier judiciaire',2000]],async()=>{bot('u','Paiement reçu.');doc('u','Casier judiciaire','Centre national du casier');it.s='terminé';renderNav()})},
+bepc(){return bepcResults()},
+async land(q=''){if(S.land!='none'){bot('u','Votre vente est déjà en cours. Je vous préviens à chaque étape.');return}
+ bot('u','Je consulte les parcelles associées à votre NPI.');
+ await work('u','Recherche au cadastre',[['Parcelles retrouvées','Le registre contient '+PARCELLES.length+' parcelles associées à votre profil.']]);
+ const chosen=PARCELLES.find(x=>q.includes(x.n));
+ if(chosen)return sellParcel(chosen);
+ const bx=el('div','box'),title=tx('b','Quelle parcelle souhaitez-vous vendre ?'),list=el('div','plist');
+ bx.append(title,list);
+ PARCELLES.forEach(x=>{const b=el('button','pc'),name=tx('b','NUP '+x.n+' · '+x.tf),meta=tx('small',x.lot+' · '+x.lieu+' · '+x.surf),tag=tx('span',x.doc=='TF'?'Titre foncier':'Attestation coutumière');tag.className='tag';b.type='button';b.append(name,meta,tag);
+  b.setAttribute('aria-label','Choisir la parcelle '+x.n+', '+x.tf+', '+x.lot+', '+x.lieu+', '+x.surf);
+  b.onclick=()=>{if(bx.dataset.done)return;bx.dataset.done='1';list.querySelectorAll('button').forEach(button=>button.disabled=true);b.classList.add('on');me('u','Je souhaite vendre la parcelle n° '+x.n);sellParcel(x)};
+  list.append(b)});
+ bot('u','Voici les parcelles retrouvées. Choisissez celle que vous souhaitez vendre.').append(bx)},
+other(){bot('u','Je gère pour l’instant : voyage (acte de naissance, casier, passeport), résultats du BEPC, casier judiciaire et vente de parcelle. Que souhaitez-vous ?')}};
+async function bepcResults(){const p=P.u,lead=el('div'),countdown=el('div','countdown-wrap'),timer=el('button','countdown');
+ timer.type='button';timer.disabled=true;timer.setAttribute('aria-label','Temps restant avant l’affichage des résultats');countdown.setAttribute('role','status');countdown.setAttribute('aria-live','polite');countdown.append(tx('span','Temps restant'),timer);
+ lead.append(tx('div','Oui, les résultats du BEPC sont annoncés aujourd’hui. Je vous les transmets dans :'),countdown);bot('u',lead);
+ const completed=await new Promise(resolve=>{const end=Date.now()+30000;let interval;
+  const finish=value=>{clearInterval(interval);if(p.cancelWait===cancel)p.cancelWait=null;resolve(value)};
+  const cancel=()=>finish(false);p.cancelWait=cancel;
+  const tick=()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000));timer.textContent='00:'+String(left).padStart(2,'0');if(!left)finish(true)};
+  tick();interval=setInterval(tick,250)});
+ if(!completed||S.role!=='u')return;
+ const subjects=[
+  {name:'Communication Écrite (Français)',grade:12,coefficient:3},
+  {name:'Lecture',grade:11,coefficient:2},
+  {name:'Mathématiques',grade:14,coefficient:3},
+  {name:'Physique, Chimie et Technologie (PCT)',grade:11,coefficient:2},
+  {name:'Sciences de la Vie et de la Terre (SVT)',grade:12,coefficient:2},
+  {name:'Histoire-Géographie',grade:10,coefficient:2},
+  {name:'Anglais (Langue Vivante 1)',grade:13,coefficient:2},
+  {name:'Langue Vivante 2 (Espagnol)',grade:14,coefficient:2}];
+ const card=el('div','grade-card');card.setAttribute('aria-live','polite');card.append(tx('p','Notes et coefficients des matières composées avant l’épreuve d’EPS.'));
+ const list=el('div','grade-list');card.append(list);bot('u','Voici le détail de vos résultats :').append(card);
+ let weightedSum=0,coefficientSum=0;
+ for(const subject of subjects){const row=el('div','grade-row');
+  row.append(tx('b',subject.name),tx('small',subject.grade+'/20 · coefficient '+subject.coefficient));
+  list.append(row);weightedSum+=subject.grade*subject.coefficient;coefficientSum+=subject.coefficient;sc('u');await sleep(650)}
+ const average=weightedSum/coefficientSum,format=n=>n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const formula=tx('div','Calcul de la moyenne avant l’EPS : ('+subjects.map(s=>s.grade+' × '+s.coefficient).join(' + ')+') ÷ '+coefficientSum+' = '+format(average)+'/20.');
+ formula.className='grade-formula';
+ const eps=el('div','grade-row');eps.append(tx('b','Éducation Physique et Sportive (EPS)'),tx('small','Coefficient 1 · épreuve à composer après les matières écrites.'));
+ list.append(eps);
+ const result=tx('div','Moyenne avant l’EPS : '+format(average)+'/20');result.className='grade-average';card.append(formula,result);
+ const threshold=tx('p','La moyenne minimale qu’il faut pour passer est 09,00/20.');threshold.className='grade-pass';card.append(threshold);
+ if(average>9){card.append(tx('p','Votre moyenne est supérieure à 09/20. Vous devez vous rendre au CEG 1 Abomey-Calavi pour l’épreuve d’Éducation Physique et Sportive (EPS), lundi prochain.'))}
+ else{card.append(tx('p','Votre moyenne n’est pas supérieure à 09/20. Selon le critère indiqué, vous n’êtes pas convoqué(e) à l’épreuve d’EPS dans ce parcours.'))}
+ sc('u')}
+async function sellParcel(x){const p=P.u;p.busy=true;try{
+ S.parcel=x;S.landDecision=null;const it=item('Vente parcelle '+x.n,'analyse en cours');
+ const tf=x.doc=='TF',steps=[
+  ['Situation géographique consultée (cadastre)',x.lot+', '+x.lieu+', '+x.surf+'.'],
+  ['Type de droit vérifié','Document : '+x.tf+'. '+(tf?'Le dossier peut poursuivre le parcours de mutation du titre foncier.':'Il s’agit d’une attestation de détention coutumière, et non d’un titre foncier.') ,tf?0:1]];
+ if(tf){steps.push(['Inscriptions d’hypothèque vérifiées','Registre foncier consulté : aucune inscription détectée.'],
+  ['Droits de mutation estimés','Estimation : 360 000 FCFA, plus honoraires du notaire.']);
+  steps.push(x.ecart?['Propriétaires au registre : écart détecté','Le titre mentionne Marie ADJOVI comme copropriétaire (indivision 50 %).',1]:
+   ['Propriétaires au registre','Vous apparaissez comme propriétaire unique. Aucun écart détecté.'])}
+ await work('u','Vérifications de la parcelle',steps);
+ if(!tf){it.s='titre foncier requis';audit('Parcelle '+x.n+' : titre foncier à confirmer avant mutation');
+  const bx=el('div','box'),message=tx('p','Pour cette démonstration, le parcours de mutation s’arrête avec une attestation de détention coutumière. Les démarches applicables pour obtenir un titre foncier doivent être confirmées auprès de l’ANDF ou d’un spécialiste du foncier.');
+  const action=tx('button','Préparer une demande de titre foncier');action.type='button';action.className='btn alt';
+  action.onclick=()=>{action.disabled=true;action.textContent='Demande préparée (simulation)';audit('Parcelle '+x.n+' : demande de titre foncier préparée (simulation)');bot('u','La demande est préparée à titre de démonstration, mais n’a pas été transmise. Confirmez les pièces et formalités auprès de l’ANDF avant tout dépôt.')};
+  bx.append(message,action);bot('u','Cette parcelle est associée à une attestation coutumière, pas à un titre foncier. Je ne peux pas poursuivre la mutation dans ce parcours de démonstration.').append(bx);renderNav();return}
+ if(!x.ecart){S.land='notaire';it.s='chez le notaire';audit('Parcelle '+x.n+' : aucun écart détecté, transmise au notaire');
+  bot('u','Aucun écart n’a été détecté. Le dossier de mutation du titre foncier est transmis au notaire Me Dossou.');
+  if(P.n.seen)bot('n','Nouvel acte à signer :').append(notaryCard());renderNav();return}
+ it.s='écart en examen';S.land='ecart';
+ bot('u','Un agent de l’ANDF examine l’écart. Je vous préviens dès que la décision est enregistrée.');
+ const c={land:1,parcelN:x.n,t:'Parcelle '+x.n+' : copropriétaire à confirmer',sev:'Lourde',s:1,a:'Propriétaire déclaré : Afi KOSSOU',b:'Afi KOSSOU <mark>+ Marie ADJOVI (indivision 50 %)</mark>',ia:'Le registre indique une copropriétaire. Vérifier les justificatifs et le consentement avant toute mutation.'};
+ S.cases.unshift(c);if(P.a.seen)bot('a','Nouveau dossier à examiner :').append(caseCard(c));renderNav()
+ }finally{p.busy=false}}
+/* agent */
+function caseCard(c){const bx=el('div','box','<b></b><span class="sev'+(c.s?' s':'')+'">'+c.sev+'</span><div class="cmp"><div><small>Déclaré</small><br>'+c.a+'</div><div><small>Registre</small><br>'+c.b+'</div></div><div class="ia"><b>Avis de l’assistant</b> (à confirmer) : '+c.ia+'</div><div class="acts"><button class="btn">Valider</button><button class="btn alt">Demander un complément</button><button class="btn no">Rejeter</button></div><div class="rj" hidden><input placeholder="Motif obligatoire" aria-label="Motif du rejet"><button class="btn no" disabled>Confirmer le rejet</button></div>');
+ $('b',bx).textContent=c.t;const [v,cp,no]=bx.querySelectorAll('.acts .btn'),i=$('.rj input',bx),cf=$('.rj button',bx);
+ const end=(k,m)=>{c.done=1;bx.innerHTML='';bx.append(tx('span','Décision enregistrée : '+{ok:'validé',cp:'complément demandé',no:'rejeté'}[k]+(m?' (motif : '+m+')':'')+'.'));audit('Agent : « '+c.t+' » '+{ok:'validé',cp:'complément demandé',no:'rejeté'}[k]+(m?' (motif : '+m+')':''));resolve(c,k,m)};
+ v.onclick=()=>end('ok');cp.onclick=()=>end('cp');no.onclick=()=>{$('.rj',bx).hidden=false;i.focus()};
+ i.oninput=()=>cf.disabled=!i.value.trim();cf.onclick=()=>end('no',i.value.trim());return bx}
+function resolve(c,k,m){if(c.land){const n=c.parcelN||S.parcel?.n||'4521',it=S.items.find(i=>i.t=='Vente parcelle '+n)||S.items.find(i=>i.t=='Vente de parcelle');const message=k=='ok'?'L’agent a levé l’écart pour la parcelle '+n+'. Votre dossier de mutation est transmis au notaire Me Dossou.':k=='cp'?'Pour la parcelle '+n+', l’agent demande le consentement écrit de la copropriétaire. Fournissez-le pour reprendre la vente.':'L’agent a rejeté le dossier de la parcelle '+n+' pour ce motif : '+m+'. Vous pouvez demander un recours.';
+ S.landDecision={outcome:k,message,reason:m||'',timestamp:new Date().toISOString()};
+ if(k=='ok'){S.land='notaire';if(it)it.s='chez le notaire';bot('u',message);if(P.n.seen)bot('n','Nouvel acte à signer :').append(notaryCard())}
+ else{S.land='none';if(it)it.s=k=='cp'?'complément demandé':'rejeté';bot('u',message)}}renderNav()}
+function listCases(k){const o=S.cases.filter(c=>!c.done);if(!o.length){bot(k,'Aucun dossier en attente. L’assistant traite tout seul.');return}
+ const b=bot(k,o.length+' dossier'+(o.length>1?'s':'')+' à examiner :');o.forEach(c=>b.append(caseCard(c)))}
+function impact(){return el('div','box','<b>Parcours « voyage » : avant et avec l’assistant</b><small> (objectifs illustratifs, à mesurer en pilote)</small><br><br>'+[['Pièces à fournir','6 → 0',6,0],['Plateformes à connaître','3 → 1 conversation',3,1],['Paiements séparés','3 → 1',3,1],['Déplacements','4 → 1 (empreintes)',4,1]].map(r=>r[0]+' <small>'+r[1]+'</small><div class="bar o"><i style="width:'+r[2]/6*100+'%"></i></div><div class="bar"><i style="width:'+Math.max(r[3]/6*100,4)+'%"></i></div>').join('')+'<small>Rouge : avant. Vert : avec l’assistant.</small>')}
+function agentRoute(q){if(/journal|audit/.test(q)){const b=el('div','box','<b>Journal d’audit</b>');const u=el('ul');(S.audit.slice(0,8)).forEach(a=>u.append(tx('li',a)));if(!S.audit.length)u.append(tx('li','Aucune action enregistrée.'));b.append(u);bot('a',b)}
+ else if(/impact/.test(q))bot('a',impact());
+ else if(/suspen|autonom|r[ée]tabl/.test(q)){S.susp=!S.susp;audit(S.susp?'Autonomie suspendue par un agent':'Autonomie rétablie');bot('a',S.susp?'Autonomie suspendue. Tous les dossiers passent désormais par un agent.':'Autonomie rétablie. Je traite seul les dossiers sans écart.');renderNav()}
+ else listCases('a')}
+/* notaire */
+function notaryCard(){const x=S.parcel||PARCELLES[0],it=S.items.find(i=>i.t=='Vente parcelle '+x.n)||S.items.find(i=>i.t=='Vente de parcelle');
+ const bx=el('div','box','<b>Mutation du titre foncier de la parcelle n° '+x.n+'</b><br><small>'+x.tf+' · '+x.lot+' · '+x.lieu+' · '+x.surf+'</small><br><small>Dossier préparé par l’assistant. Vérifications de démonstration :</small><table><tr><td>Situation géographique consultée</td><td>✓</td></tr><tr><td>Inscriptions d’hypothèque vérifiées</td><td>✓</td></tr><tr><td>'+(x.ecart?'Écart de copropriété examiné par l’agent ANDF':'Aucun écart de propriété détecté')+'</td><td>✓</td></tr><tr><td>Droits de mutation estimés</td><td>360 000 FCFA</td></tr><tr><td>Identité et consentement des parties</td><td>À constater</td></tr></table><small>Vérifiez vous-même l’identité et le consentement des parties avant de signer avec votre clé.</small><br><button class="btn">Signer l’acte avec ma clé</button>');
+ $('button',bx).onclick=()=>{S.land='signe';if(it)it.s='droits à payer';audit('Notaire : mutation du titre foncier de la parcelle '+x.n+' signée avec sa clé');bx.innerHTML='';bx.append(tx('span','Acte signé avec votre clé. L’usager est invité à régler les droits.'));renderNav();
+  bot('u','Le notaire a signé l’acte. Il reste les droits et honoraires à valider.');
+  pay('u',[['Droits de mutation (estimation)',360000],['Honoraires du notaire (simulation)',150000]],async()=>{bot('u','Paiement reçu. Voici votre acte.');doc('u','Acte de mutation du titre foncier, parcelle '+x.n,'Me Dossou, notaire');if(it)it.s='terminé';S.land='none';renderNav()})};return bx}
+function notaryList(k){if(S.land=='notaire')bot(k,'1 dossier de mutation à signer :').append(notaryCard());else bot(k,'Aucun acte en attente. Les dossiers de mutation apparaîtront ici après vérification.')}
+/* envoi */
+async function send(k,t){const p=P[k];t=t.trim();if(!t||p.busy)return;p.busy=true;me(k,t);const q=t.toLowerCase();
+ try{if(k=='u')await FL[/bepc/.test(q)?'bepc':/voyag|passeport/.test(q)?'travel':/parcelle|vend|terrain/.test(q)?'land':/casier/.test(q)?'casier':'other'](q);
+  else if(k=='a')agentRoute(q);else notaryList('n')}finally{p.busy=false}}
+/* navigation */
+function renderNav(){const L=$('#list');L.innerHTML='';let a;
+ if(S.role=='u')a=S.items.length?S.items.map(i=>i.t+' · '+i.s):['Aucune démarche en cours'];
+ else if(S.role=='a')a=['Dossiers en attente : '+S.cases.filter(c=>!c.done).length,'Autonomie : '+(S.susp?'suspendue':'active')];
+ else a=['Actes en attente : '+(S.land=='notaire'?1:0)];
+ a.forEach((t,i)=>{const d=el('div','it'+(i?'':' on')),m=/terminé/.test(t)?'ok':/rejeté/.test(t)?'bad':/ · /.test(t)?'run':'';if(S.role=='u'&&m)d.append(el('i','dot '+m));d.append(tx('span',t));d.title=t;L.append(d)});saveState()}
+function show(k){S.role=k;const r=R[k];$('#auth').hidden=true;$('#app').hidden=false;
+ for(const x in P)P[x].pn.hidden=x!=k;document.body.dataset.role=k;$('#meAv').textContent=r.name.split(' ').map(w=>w[0]).slice(0,2).join('');$('#meN').textContent=r.name;$('#meR').textContent=r.chip;$('#ttl').textContent=r.ttl;$('#chip').textContent=r.chip;$('#lt').textContent=r.lt;renderNav();
+ if(k!='u'&&!P[k].seen){P[k].seen=true;k=='a'?listCases('a'):notaryList('n')}
+ if(k=='u'&&!P.u.seen&&S.items.length){const statuses=S.items.map(i=>i.t+' : '+i.s).join(' ; ');bot('u','État enregistré de vos démarches : '+statuses+(S.landDecision?' | Décision de l’agent : '+S.landDecision.message:''))}
+ P[k].seen=true;P[k].ta.focus()}
+$('#nwb').onclick=()=>{const p=P[S.role];if(p.busy)return;p.thread.innerHTML='';p.pn.classList.add('empty');setMenu(false)};
+$('#out').onclick=()=>{setMenu(false);$('#app').hidden=true;$('#auth').hidden=false;delete document.body.dataset.role;step=0;$('#aid').value='';$('#aotp').value='';S.role=null;for(const k in P){if(P[k].cancelWait)P[k].cancelWait();P[k].thread.innerHTML='';P[k].pn.classList.add('empty');P[k].seen=false;P[k].busy=false;}saveState();draw()};
+/* menu mobile */
+const mm=$('#mm'),nav=$('#nav'),bk=$('#bk'),mobileNav=matchMedia('(max-width:800px)');
+function setMenu(o){const open=mobileNav.matches&&o;$('#app').classList.toggle('menu-open',open);mm.setAttribute('aria-expanded',open);nav.inert=mobileNav.matches&&!open;bk.hidden=!open;if(open)$('.nw',nav).focus()}
+mm.onclick=()=>setMenu(mm.getAttribute('aria-expanded')!='true');bk.onclick=()=>setMenu(false);
+document.addEventListener('keydown',e=>{if(e.key=='Escape')setMenu(false)});
+mobileNav.addEventListener('change',()=>setMenu(false));
+setMenu(false);
+/* connexion */
+let step=0,who=null;
+function draw(){$('#aOtp').hidden=step==0;$('#aid').readOnly=step==1;$('#aErr').textContent='';$('#aBtn').textContent=step?'Se connecter':'Continuer';
+ $('#aIntro').textContent=step==0?'Accédez à votre espace avec votre NPI.':who=='u'?(S.npi==$('#aid').value.trim()?'Vous êtes déjà venu : confirmez par un code SMS ou e-mail.':'Première connexion : un code est envoyé au numéro enregistré auprès de l’ANIP (se terminant par 34 12).'):'Un code est envoyé à votre téléphone professionnel.';
+ $('#aCh').hidden=!(step==1&&who=='u'&&S.npi==$('#aid').value.trim())}
+$('#aForm').onsubmit=e=>{e.preventDefault();const v=$('#aid').value.trim().toLowerCase();
+ if(step==0){who=v=='agent@demonstration.bj'?'a':v=='notaire@demonstration.bj'?'n':/^\d{10}$/.test(v)?'u':null;
+  if(!who){$('#aErr').textContent='Saisissez un NPI de 10 chiffres ou un identifiant professionnel.';return}
+  step=1;draw();$('#aotp').focus();return}
+ if($('#aotp').value!='123456'){$('#aErr').textContent='Code incorrect. Pour la démonstration, saisissez 123456.';return}
+ if(who=='u')S.npi=v;audit('Connexion : '+R[who].chip+' '+R[who].name);step=0;show(who)};
+draw();
+</script></body></html>
