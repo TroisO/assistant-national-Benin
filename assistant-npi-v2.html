@@ -75,8 +75,6 @@ li.ok:before{content:"✓";background:var(--g);color:var(--on)}li.warn:before{co
 .pc{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;width:100%;min-width:0;text-align:left;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:14px;padding:12px 14px}
 .pc:hover:not(:disabled),.pc:focus-visible{border-color:var(--g);background:var(--gs)}
 .pc:disabled{opacity:.6;cursor:default}.pc>*{min-width:0;overflow-wrap:anywhere}.pc small{color:var(--mu)}.pc .tag{width:fit-content;max-width:100%;border-radius:99px;padding:1px 8px;background:var(--gs);color:var(--g);font-size:.78rem;font-weight:600}
-.countdown-wrap{display:flex;align-items:center;gap:10px;margin-top:10px}
-.countdown{border:1px solid var(--bd);border-radius:99px;background:var(--gs);color:var(--g);padding:3px 11px;font:600 .9rem/1.5 ui-monospace,monospace}
 .grade-card{margin-top:10px;border:1px solid var(--bd);border-radius:16px;padding:14px;background:var(--bg)}
 .grade-card>p{margin:0 0 10px;color:var(--mu);font-size:.86rem}
 .grade-list{display:grid;gap:8px}
@@ -180,7 +178,7 @@ let nextConversationId=1;
 for(const k in R){const r=R[k],pn=el('section','pane','<div class="scroll"><div class="wel"><h1></h1><p></p></div><div class="thread"></div></div><div class="dock"><div class="chips"></div></div><div class="comp"><div class="in"><textarea rows="1" aria-label="Message" placeholder="Écrivez ce dont vous avez besoin…"></textarea><button class="ic mic" type="button" title="Dicter" aria-label="Dicter">'+ICON.mic+'</button><button class="ic send" type="button" disabled title="Envoyer" aria-label="Envoyer">'+ICON.send+'</button></div><div class="disc">Démonstration : l’assistant prépare, un humain décide et signe.</div></div>');
  pn.hidden=true;pn.classList.add('empty');$('#main').append(pn);
  const initialThread=$('.thread',pn),initialConversation={id:nextConversationId++,title:'Nouvelle conversation',thread:initialThread,draft:'',hasMessages:false};
- const p=P[k]={pn,thread:initialThread,sc:$('.scroll',pn),wel:$('.wel',pn),ta:$('textarea',pn),busy:false,seen:false,cancelWait:null,conversations:[initialConversation],activeConversationId:initialConversation.id};
+ const p=P[k]={pn,thread:initialThread,sc:$('.scroll',pn),wel:$('.wel',pn),ta:$('textarea',pn),busy:false,seen:false,conversations:[initialConversation],activeConversationId:initialConversation.id};
  $('h1',pn).textContent=r.h;$('.wel p',pn).textContent=r.w;
  r.ch.forEach(t=>{const b=tx('button',t);b.type='button';b.onclick=()=>send(k,t);$('.chips',pn).append(b)});
  const sd=$('.send',pn),go=()=>{const v=p.ta.value;p.ta.value='';p.ta.style.height='auto';sd.disabled=true;const conversation=p.conversations.find(c=>c.id===p.activeConversationId);if(conversation)conversation.draft='';send(k,v)};
@@ -249,15 +247,9 @@ async land(q=''){if(S.land!='none'){bot('u','Votre vente est déjà en cours. Je
   list.append(b)});
  bot('u','Voici les parcelles retrouvées. Choisissez celle que vous souhaitez vendre.').append(bx)},
 other(){bot('u','Je gère pour l’instant : voyage (acte de naissance, casier, passeport), résultats du BEPC, casier judiciaire et vente de parcelle. Que souhaitez-vous ?')}};
-async function bepcResults(){const p=P.u,lead=el('div'),countdown=el('div','countdown-wrap'),timer=el('button','countdown');
- timer.type='button';timer.disabled=true;timer.setAttribute('aria-label','Temps restant avant l’affichage des résultats');countdown.setAttribute('role','status');countdown.setAttribute('aria-live','polite');countdown.append(tx('span','Temps restant'),timer);
- lead.append(tx('div','Oui, les résultats du BEPC sont annoncés aujourd’hui. Je vous les transmets dans :'),countdown);bot('u',lead);
- const completed=await new Promise(resolve=>{const end=Date.now()+30000;let interval;
-  const finish=value=>{clearInterval(interval);if(p.cancelWait===cancel)p.cancelWait=null;resolve(value)};
-  const cancel=()=>finish(false);p.cancelWait=cancel;
-  const tick=()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000));timer.textContent='00:'+String(left).padStart(2,'0');if(!left)finish(true)};
-  tick();interval=setInterval(tick,250)});
- if(!completed||S.role!=='u')return;
+async function bepcResults(){await work('u','Consultation de la base de données de la DEC',[
+ ['Recherche du dossier de l’élève','Vérification des informations nécessaires à la consultation.'],
+ ['Résultats du BEPC retrouvés','Les notes sont prêtes à être affichées.']]);
  const subjects=[
   {name:'Communication Écrite (Français)',grade:12,coefficient:3},
   {name:'Lecture',grade:11,coefficient:2},
@@ -348,7 +340,7 @@ function show(k){S.role=k;const r=R[k];$('#auth').hidden=true;$('#app').hidden=f
  if(k=='u'&&!P.u.seen&&S.items.length){const statuses=S.items.map(i=>i.t+' : '+i.s).join(' ; ');bot('u','État enregistré de vos démarches : '+statuses+(S.landDecision?' | Décision de l’agent : '+S.landDecision.message:''))}
  P[k].seen=true;P[k].ta.focus()}
 $('#nwb').onclick=()=>{if(!S.role||P[S.role].busy)return;createConversation(S.role);setMenu(false)};
-$('#out').onclick=()=>{setMenu(false);$('#app').hidden=true;$('#auth').hidden=false;delete document.body.dataset.role;step=0;$('#aid').value='';$('#aotp').value='';S.role=null;for(const k in P){if(P[k].cancelWait)P[k].cancelWait();resetConversations(k);P[k].pn.classList.add('empty');P[k].seen=false;P[k].busy=false;}saveState();draw()};
+$('#out').onclick=()=>{setMenu(false);$('#app').hidden=true;$('#auth').hidden=false;delete document.body.dataset.role;step=0;$('#aid').value='';$('#aotp').value='';S.role=null;for(const k in P){resetConversations(k);P[k].pn.classList.add('empty');P[k].seen=false;P[k].busy=false;}saveState();draw()};
 /* menu mobile */
 const mm=$('#mm'),nav=$('#nav'),bk=$('#bk'),mobileNav=matchMedia('(max-width:800px)');
 function setMenu(o){const open=mobileNav.matches&&o;$('#app').classList.toggle('menu-open',open);mm.setAttribute('aria-expanded',open);nav.inert=mobileNav.matches&&!open;bk.hidden=!open;if(open)$('.nw',nav).focus()}
