@@ -234,7 +234,7 @@ async casier(){const it=item('Casier judiciaire','en cours');
  await work('u','Travail de l’assistant',[['Identité vérifiée avec votre NPI','Aucune pièce demandée.'],['Casier consulté','Aucun écart détecté.']]);
  pay('u',[['Casier judiciaire',2000]],async()=>{bot('u','Paiement reçu.');doc('u','Casier judiciaire','Centre national du casier');it.s='terminé';renderNav()})},
 bepc(){return bepcResults()},
-async land(q=''){if(S.land!='none'){bot('u','Votre vente est déjà en cours. Je vous préviens à chaque étape.');return}
+async land(q=''){if(S.land!='none'){const n=S.parcel?.n||'4521',message=S.land=='ecart'?'Votre dossier de vente attend la décision de l’agent ANDF. Il vérifie l’écart concernant la copropriété. Dès qu’il aura statué, je vous informerai de la suite.':S.land=='notaire'?(S.landDecision?.outcome=='ok'?'L’agent a validé votre dossier. Le notaire vérifie maintenant les pièces et prépare l’acte. Je vous informerai dès qu’il sera prêt à signer.':'Votre dossier a été transmis au notaire. Il vérifie maintenant les pièces et prépare l’acte. Je vous informerai dès qu’il sera prêt à signer.'):'Le notaire a signé l’acte de la parcelle '+n+'. Il reste à régler les droits de mutation et les honoraires pour finaliser la vente.';bot('u',message);return}
  bot('u','Je consulte les parcelles associées à votre NPI.');
  await work('u','Recherche au cadastre',[['Parcelles retrouvées','Le registre contient '+PARCELLES.length+' parcelles associées à votre profil.']]);
  const chosen=PARCELLES.find(x=>q.includes(x.n));
