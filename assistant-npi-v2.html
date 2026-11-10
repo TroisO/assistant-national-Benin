@@ -57,6 +57,11 @@ header b{font-weight:600}.chip{font-size:.8rem;color:var(--g);background:var(--g
 .msg{margin:0 0 26px;animation:in .25s ease}@keyframes in{from{opacity:0;transform:translateY(6px)}}
 .msg.me{background:var(--me);border-radius:22px 22px 6px 22px;padding:10px 18px;max-width:80%;margin-left:auto;width:fit-content;white-space:pre-wrap}
 .msg.bot{display:flex;gap:14px;align-items:flex-start}.bd{flex:1;min-width:0;white-space:pre-wrap;font-size:1.02rem;padding-top:2px}.bd>*{white-space:normal}
+.reply-text{margin:0 0 10px}.reply-text:last-child{margin-bottom:0}
+.thinking{display:flex;align-items:center;gap:9px;min-height:28px;color:var(--mu);font-size:.92rem}
+.thinking-dots{display:inline-flex;gap:4px}.thinking-dots i{width:5px;height:5px;border-radius:50%;background:var(--mu);animation:think 1s ease-in-out infinite}
+.thinking-dots i:nth-child(2){animation-delay:.15s}.thinking-dots i:nth-child(3){animation-delay:.3s}
+@keyframes think{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
 .ai{width:30px;height:30px;border-radius:50%;flex:none;border:1px solid var(--bd);background:linear-gradient(90deg,#008751 0 42%,transparent 42%),linear-gradient(#fcd116 50%,#e8112d 50%);position:relative}
 .ai:after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 3px var(--bg)}
 details.work{margin:10px 0;border:1px solid var(--bd);border-radius:14px;padding:4px 14px;font-size:.92rem;color:var(--mu);background:var(--sb)}
@@ -68,7 +73,7 @@ details.work li small{display:block;font-size:.84rem;color:var(--mu)}
 li.run{opacity:.85}li.run:before{content:"";position:absolute;left:3px;top:7px;width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite}
 li.ok:before,li.warn:before{position:absolute;left:3px;top:5px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;font-weight:700}
 li.ok:before{content:"✓";background:var(--g);color:var(--on)}li.warn:before{content:"!";background:var(--red);color:#fff}
-@keyframes sp{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){li.run:before,.msg{animation:none}}
+@keyframes sp{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){li.run:before,.msg,.thinking-dots i{animation:none}}
 .box{margin-top:12px;border:1px solid var(--bd);border-radius:18px;padding:14px 18px;font-size:.94rem;background:var(--bg);box-shadow:var(--sh)}
 .box table{width:100%;border-collapse:collapse;margin:8px 0}.box td{padding:6px 8px 6px 0;border-bottom:1px solid var(--bd)}.box td:last-child{text-align:right;white-space:nowrap}
 .plist{display:grid;gap:8px;margin-top:10px}
@@ -179,7 +184,7 @@ let nextConversationId=1;
 for(const k in R){const r=R[k],pn=el('section','pane','<div class="scroll"><div class="wel"><h1></h1><p></p></div><div class="thread"></div></div><div class="dock"><div class="chips"></div></div><div class="comp"><div class="in"><textarea rows="1" aria-label="Message" placeholder="Écrivez ce dont vous avez besoin…"></textarea><button class="ic mic" type="button" title="Dicter" aria-label="Dicter">'+ICON.mic+'</button><button class="ic send" type="button" disabled title="Envoyer" aria-label="Envoyer">'+ICON.send+'</button></div><div class="disc">Démonstration : l’assistant prépare, un humain décide et signe s’il y a lieu.</div></div>');
  pn.hidden=true;pn.classList.add('empty');$('#main').append(pn);
  const initialThread=$('.thread',pn),initialConversation={id:nextConversationId++,title:'Nouvelle conversation',thread:initialThread,draft:'',hasMessages:false};
- const p=P[k]={pn,thread:initialThread,sc:$('.scroll',pn),wel:$('.wel',pn),ta:$('textarea',pn),busy:false,seen:false,conversations:[initialConversation],activeConversationId:initialConversation.id};
+ const p=P[k]={pn,thread:initialThread,sc:$('.scroll',pn),wel:$('.wel',pn),ta:$('textarea',pn),busy:false,seen:false,replyActive:false,replyBody:null,replyQueue:Promise.resolve(),conversations:[initialConversation],activeConversationId:initialConversation.id};
  $('h1',pn).textContent=r.h;$('.wel p',pn).textContent=r.w;
  r.ch.forEach(t=>{const b=tx('button',t);b.type='button';b.onclick=()=>send(k,t);$('.chips',pn).append(b)});
  const sd=$('.send',pn),go=()=>{const v=p.ta.value;p.ta.value='';p.ta.style.height='auto';sd.disabled=true;const conversation=p.conversations.find(c=>c.id===p.activeConversationId);if(conversation)conversation.draft='';send(k,v)};
@@ -190,8 +195,17 @@ for(const k in R){const r=R[k],pn=el('section','pane','<div class="scroll"><div 
   if(!SR){bot(k,'La dictée n’est pas disponible sur ce navigateur. Écrivez votre demande.');return}
   const rc=new SR();rc.lang='fr-FR';rc.onresult=e=>{p.ta.value=e.results[0][0].transcript;p.ta.focus()};rc.onerror=()=>bot(k,'Je n’ai pas pu entendre. Réessayez ou écrivez.');rc.start()}}
 const sc=k=>{P[k].sc.scrollTop=P[k].sc.scrollHeight};
-function bot(k,c){const m=el('div','msg bot','<i class="ai" aria-hidden="true"></i><div class="bd"></div>'),b=m.lastChild;
- if(c instanceof Node)b.append(c);else if(c)b.textContent=c;P[k].thread.append(m);P[k].pn.classList.remove('empty');sc(k);return b}
+function startReply(k){const p=P[k],m=el('div','msg bot','<i class="ai" aria-hidden="true"></i><div class="bd"></div>');p.replyBody=m.lastChild;
+ const status=el('div','thinking');status.setAttribute('role','status');status.append(tx('span','Réflexion en cours'),el('span','thinking-dots','<i></i><i></i><i></i>'));
+ p.replyBody.append(status);p.thread.append(m);p.replyActive=true;p.replyQueue=Promise.resolve();p.pn.classList.remove('empty');sc(k)}
+async function typeText(k,target,text){if(matchMedia('(prefers-reduced-motion: reduce)').matches){target.textContent=text;return}
+ const chars=Array.from(text);for(let i=0;i<chars.length;i++){target.textContent+=chars[i];if(i%8===0)sc(k);await sleep(18)}sc(k)}
+function bot(k,c){const p=P[k];let b=p.replyActive&&p.replyBody?p.replyBody:null;
+ if(!b){const m=el('div','msg bot','<i class="ai" aria-hidden="true"></i><div class="bd"></div>');b=m.lastChild;p.thread.append(m)}
+ const status=$('.thinking',b);if(status)status.remove();
+ if(c instanceof Node)b.append(c);else if(c){const paragraph=tx('p','');paragraph.className='reply-text';b.append(paragraph);
+  if(p.replyActive)p.replyQueue=p.replyQueue.then(()=>typeText(k,paragraph,c));else paragraph.textContent=c}
+ p.pn.classList.remove('empty');sc(k);return b}
 function me(k,t){const m=el('div','msg me');m.textContent=t;P[k].thread.append(m);const p=P[k],conversation=p.conversations.find(c=>c.id===p.activeConversationId);
  if(conversation&&!conversation.hasMessages){conversation.title=t.length>32?t.slice(0,29)+'…':t;conversation.hasMessages=true;renderNav()}
  P[k].pn.classList.remove('empty');sc(k)}
@@ -347,9 +361,10 @@ function notaryCard(){const x=S.parcel||PARCELLES[0],it=S.items.find(i=>i.t=='Ve
   pay('u',[['Droits de mutation (estimation)',360000],['Honoraires du notaire (simulation)',150000]],async()=>{bot('u','Paiement reçu. Voici votre acte.');doc('u','Acte de mutation du titre foncier, parcelle '+x.n,'Me Dossou, notaire');if(it)it.s='terminé';S.land='none';renderNav()})};return bx}
 function notaryList(k){if(S.land=='notaire')bot(k,'1 dossier de mutation à signer :').append(notaryCard());else bot(k,'Aucun acte en attente. Les dossiers de mutation apparaîtront ici après vérification.')}
 /* envoi */
-async function send(k,t){const p=P[k];t=t.trim();if(!t||p.busy)return;p.busy=true;me(k,t);const q=t.toLowerCase();
- try{if(k=='u')await FL[/bepc/.test(q)?'bepc':/signature|signatur|empreinte|\b(cip|anip)\b/.test(q)?'sign':/voyag|passeport/.test(q)?'travel':/parcelle|vend|terrain/.test(q)?'land':'other'](q);
-  else if(k=='a')agentRoute(q);else notaryList('n')}finally{p.busy=false;renderNav()}}
+async function send(k,t){const p=P[k];t=t.trim();if(!t||p.busy)return;p.busy=true;me(k,t);startReply(k);const q=t.toLowerCase();
+ try{await sleep(550);if(k=='u')await FL[/bepc/.test(q)?'bepc':/signature|signatur|empreinte|\b(cip|anip)\b/.test(q)?'sign':/voyag|passeport/.test(q)?'travel':/parcelle|vend|terrain/.test(q)?'land':'other'](q);
+  else if(k=='a')agentRoute(q);else notaryList('n');await p.replyQueue}
+ finally{p.replyActive=false;p.replyBody=null;p.replyQueue=Promise.resolve();p.busy=false;renderNav()}}
 /* navigation */
 function renderNav(){const C=$('#conversations');C.innerHTML='';const p=P[S.role];$('#nwb').disabled=!!(p&&p.busy);
  if(p)p.conversations.forEach(conversation=>{const b=tx('button',conversation.title);b.type='button';b.className='it'+(conversation.id===p.activeConversationId?' on':'');b.disabled=p.busy;b.title=conversation.title;b.setAttribute('aria-current',conversation.id===p.activeConversationId?'page':'false');b.onclick=()=>selectConversation(S.role,conversation.id);C.append(b)});
