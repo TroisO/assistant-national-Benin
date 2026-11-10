@@ -156,9 +156,10 @@ const PARCELLES=[
 const initialCases=[
 {t:'Casier judiciaire : orthographe du nom',sev:'Légère',a:'HOUNKPATI<mark>N</mark>',b:'HOUNKPATI',ia:'Faute de frappe probable (une lettre). Recommandation : valider.'},
 {t:'Casier judiciaire : homonyme possible',sev:'Sensible',s:1,a:'Né le 12/03/1988',b:'<mark>Né le 04/09/1982</mark> (même nom)',ia:'Probablement un homonyme. Recommandation : demander la filiation avant de délivrer.'}];
-function loadState(){const initial={role:null,npi:'',items:[],land:'none',landDecision:null,parcel:null,susp:false,audit:[],cases:initialCases};
+function loadState(){const initial={role:null,npi:'',items:[],land:'none',landDecision:null,parcel:null,sign:null,susp:false,audit:[],cases:initialCases};
  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved||typeof saved!=='object')return initial;
-  return {...initial,npi:typeof saved.npi=='string'?saved.npi:'',items:Array.isArray(saved.items)?saved.items:[],
+  const items=Array.isArray(saved.items)?saved.items:[];
+  return {...initial,npi:typeof saved.npi=='string'?saved.npi:'',items,sign:items.slice().reverse().find(i=>i.t=='Mise à jour de ma signature')||null,
    land:['none','ecart','notaire','signe'].includes(saved.land)?saved.land:'none',
    landDecision:saved.landDecision&&typeof saved.landDecision.message=='string'?saved.landDecision:null,
    parcel:PARCELLES.find(x=>x.n===(saved.parcel&&saved.parcel.n))||(saved.land&&saved.land!='none'?PARCELLES[0]:null),
@@ -168,7 +169,7 @@ const S=loadState();
 function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({npi:S.npi,items:S.items,land:S.land,landDecision:S.landDecision,parcel:S.parcel,susp:S.susp,audit:S.audit,cases:S.cases}))}
  catch(error){console.error('Impossible d’enregistrer les données locales de la démonstration.',error)}}
 const R={
-u:{name:'Afi KOSSOU',chip:'Usager',ttl:'Mes démarches',lt:'Mes démarches',h:'Bonjour Afi. Que puis-je faire pour vous ?',w:'Je m’occupe de tout. Vous ne validez que les paiements.',ch:['Je veux voyager le mois prochain','Je veux vendre ma parcelle','Mon résultat au BEPC','J’ai besoin de mon casier judiciaire']},
+u:{name:'Afi KOSSOU',chip:'Usager',ttl:'Mes démarches',lt:'Mes démarches',h:'Bonjour Afi. Que puis-je faire pour vous ?',w:'Je m’occupe de tout. Vous ne validez que les paiements.',ch:['Je veux voyager le mois prochain','Je veux vendre ma parcelle','Mon résultat au BEPC','Mettre à jour ma signature à l’ANIP']},
 a:{name:'Agent ANDF',chip:'Agent',ttl:'Examen des dossiers',lt:'Mon espace',h:'Dossiers à examiner',w:'Je traite seul les dossiers sans écart. Vous voyez ici les exceptions.',ch:['Dossiers en attente','Journal d’audit','Voir l’impact','Suspendre ou rétablir l’autonomie']},
 n:{name:'Me Dossou',chip:'Notaire',ttl:'Actes à signer',lt:'Mon étude',h:'Actes à signer',w:'Je prépare chaque acte. Vous constatez le consentement et signez avec votre clé.',ch:['Actes en attente']}};
 const P={};
@@ -230,9 +231,14 @@ async travel(){const it=item('Voyage','en cours');bot('u','Très bien, je m’oc
  pay('u',[['Acte de naissance',1000],['Casier judiciaire',2000],['Passeport (renouvellement)',50000]],async()=>{
   bot('u','Paiement reçu. Voici vos documents.');doc('u','Acte de naissance','état civil');doc('u','Casier judiciaire','Centre national du casier');doc('u','Récépissé de demande de passeport','Direction du passeport');
   bot('u','Bon voyage ! Je vous rappelle votre rendez-vous d’empreintes la veille.');it.s='terminé';renderNav()})},
-async casier(){const it=item('Casier judiciaire','en cours');
- await work('u','Travail de l’assistant',[['Identité vérifiée avec votre NPI','Aucune pièce demandée.'],['Casier consulté','Aucun écart détecté.']]);
- pay('u',[['Casier judiciaire',2000]],async()=>{bot('u','Paiement reçu.');doc('u','Casier judiciaire','Centre national du casier');it.s='terminé';renderNav()})},
+async sign(){if(S.sign&&S.sign.s!='terminé'){bot('u',S.sign.appointment?'Votre rendez-vous de mise à jour de signature est prévu le '+S.sign.appointment.label+'. L’agent effectuera la lecture de votre empreinte, puis vous signerez sur place.':'Votre dossier de mise à jour de signature est prêt. Choisissez un créneau pour rencontrer un agent de l’ANIP.');if(!S.sign.appointment)rdvSign();return}
+ S.sign=item('Mise à jour de ma signature','en cours');
+ bot('u','Je regarde ce que contient votre dossier.');
+ await work('u','Travail de l’assistant',[
+  ['CIP et dossier ANIP lus avec votre NPI','Votre CIP ne comporte pas encore de signature numérique conforme.',1],
+  ['Dossier préparé pour la visite','Identité et photo déjà au dossier. Vous n’avez aucune pièce à apporter.']]);
+ bot('u','À savoir : lors de votre rendez-vous, l’agent vous demandera de poser votre doigt sur un lecteur d’empreinte, puis vous apposerez votre signature. La lecture de l’empreinte et la signature se feront sur place, devant l’agent. Je vous prépare un créneau.');
+ rdvSign()},
 bepc(){return bepcResults()},
 async land(q=''){if(S.land!='none'){const n=S.parcel?.n||'4521',message=S.land=='ecart'?'Votre dossier de vente attend la décision de l’agent ANDF. Il vérifie l’écart concernant la copropriété. Dès qu’il aura statué, je vous informerai de la suite.':S.land=='notaire'?(S.landDecision?.outcome=='ok'?'L’agent a validé votre dossier. Le notaire vérifie maintenant les pièces et prépare l’acte. Je vous informerai dès qu’il sera prêt à signer.':'Votre dossier a été transmis au notaire. Il vérifie maintenant les pièces et prépare l’acte. Je vous informerai dès qu’il sera prêt à signer.'):'Le notaire a signé l’acte de la parcelle '+n+'. Il reste à régler les droits de mutation et les honoraires pour finaliser la vente.';bot('u',message);return}
  bot('u','Je consulte les parcelles associées à votre NPI.');
@@ -246,7 +252,24 @@ async land(q=''){if(S.land!='none'){const n=S.parcel?.n||'4521',message=S.land==
   b.onclick=()=>{if(bx.dataset.done)return;bx.dataset.done='1';list.querySelectorAll('button').forEach(button=>button.disabled=true);b.classList.add('on');me('u','Je souhaite vendre la parcelle n° '+x.n);sellParcel(x)};
   list.append(b)});
  bot('u','Voici les parcelles retrouvées. Choisissez celle que vous souhaitez vendre.').append(bx)},
-other(){bot('u','Je gère pour l’instant : voyage (acte de naissance, casier, passeport), résultats du BEPC, casier judiciaire et vente de parcelle. Que souhaitez-vous ?')}};
+other(){bot('u','Je gère pour l’instant : voyage, vente de parcelle, résultats du BEPC et mise à jour de signature à l’ANIP. Que souhaitez-vous ?')}};
+function rdvSign(){const bx=el('div','box'),intro=tx('p','La visite sera courte : empreinte, puis signature. Tout le reste est déjà prêt.'),title=tx('b','Choisissez un créneau de rendez-vous'),slots=el('div','plist');
+ bx.append(intro,title,slots);
+ const days=[];let date=new Date();date.setHours(12,0,0,0);
+ while(days.length<2){date.setDate(date.getDate()+1);if(date.getDay()!=0&&date.getDay()!=6)days.push(new Date(date))}
+ for(const [index,hour] of ['09 h 00','14 h 00'].entries()){const day=days[index],label=day.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+hour,b=tx('button','Réserver, '+label);b.type='button';b.className='pc';b.onclick=()=>{if(bx.dataset.done)return;bx.dataset.done='1';slots.querySelectorAll('button').forEach(button=>button.disabled=true);S.sign.appointment={date:day.toISOString(),label};S.sign.s='rendez-vous réservé';audit('Rendez-vous ANIP réservé : '+label);renderNav();bot('u','Votre rendez-vous est réservé le '+label+'. Un rappel est programmé pour la veille. À l’ANIP, l’agent lira votre empreinte puis vous signerez devant lui.')};
+  slots.append(b)}
+ bot('u',bx)}
+function agentSignCard(){const bx=el('div','box'),appointment=S.sign.appointment,label=appointment?appointment.label:'Rendez-vous à confirmer';
+ bx.append(tx('b','Mise à jour de signature à l’ANIP'),tx('p','Rendez-vous : '+label));
+ const steps=el('div','grade-list'),fingerprint=tx('button',S.sign.fingerprintDone?'Empreinte lue ✓':'1. Lire l’empreinte de l’usager'),signature=tx('button',S.sign.signatureDone?'Signature enregistrée ✓':'2. Enregistrer la signature');
+ fingerprint.type='button';fingerprint.className='btn'+(S.sign.fingerprintDone?' alt':'');fingerprint.disabled=!!S.sign.fingerprintDone;
+ signature.type='button';signature.className='btn'+(S.sign.signatureDone?' alt':'');signature.disabled=!S.sign.fingerprintDone||!!S.sign.signatureDone;
+ fingerprint.onclick=()=>{S.sign.fingerprintDone=true;S.sign.s='empreinte lue';audit('Agent ANIP : empreinte lue au rendez-vous');bx.replaceWith(agentSignCard())};
+ signature.onclick=()=>{S.sign.signatureDone=true;S.sign.s='terminé';audit('Agent ANIP : signature enregistrée après lecture de l’empreinte');bx.replaceWith(agentSignCard());if(P.u.seen)bot('u','Votre empreinte a été vérifiée et votre signature est enregistrée.')};
+ steps.append(fingerprint,signature);bx.append(steps);
+ if(S.sign.signatureDone)bx.append(tx('p','La visite est terminée. L’empreinte a été lue et la signature a été enregistrée par l’agent.'));
+ return bx}
 async function bepcResults(){await work('u','Consultation de la base de données de la DEC',[
  ['Recherche du dossier de l’élève','Vérification des informations nécessaires à la consultation.'],
  ['Résultats du BEPC retrouvés','Les notes sont prêtes à être affichées.']]);
@@ -308,8 +331,9 @@ function resolve(c,k,m){if(c.land){const n=c.parcelN||S.parcel?.n||'4521',it=S.i
  S.landDecision={outcome:k,message,reason:m||'',timestamp:new Date().toISOString()};
  if(k=='ok'){S.land='notaire';if(it)it.s='chez le notaire';bot('u',message);if(P.n.seen)bot('n','Nouvel acte à signer :').append(notaryCard())}
  else{S.land='none';if(it)it.s=k=='cp'?'complément demandé':'rejeté';bot('u',message)}}renderNav()}
-function listCases(k){const o=S.cases.filter(c=>!c.done);if(!o.length){bot(k,'Aucun dossier en attente. L’assistant traite tout seul.');return}
- const b=bot(k,o.length+' dossier'+(o.length>1?'s':'')+' à examiner :');o.forEach(c=>b.append(caseCard(c)))}
+function listCases(k){const o=S.cases.filter(c=>!c.done);if(!o.length)bot(k,'Aucun dossier administratif en attente.');
+ else{const b=bot(k,o.length+' dossier'+(o.length>1?'s':'')+' à examiner :');o.forEach(c=>b.append(caseCard(c)))}
+ if(S.sign&&S.sign.appointment&&!S.sign.signatureDone)bot(k,'Rendez-vous de mise à jour de signature à traiter :').append(agentSignCard())}
 function impact(){return el('div','box','<b>Parcours « voyage » : avant et avec l’assistant</b><small> (objectifs illustratifs, à mesurer en pilote)</small><br><br>'+[['Pièces à fournir','6 → 0',6,0],['Plateformes à connaître','3 → 1 conversation',3,1],['Paiements séparés','3 → 1',3,1],['Déplacements','4 → 1 (empreintes)',4,1]].map(r=>r[0]+' <small>'+r[1]+'</small><div class="bar o"><i style="width:'+r[2]/6*100+'%"></i></div><div class="bar"><i style="width:'+Math.max(r[3]/6*100,4)+'%"></i></div>').join('')+'<small>Rouge : avant. Vert : avec l’assistant.</small>')}
 function agentRoute(q){if(/journal|audit/.test(q)){const b=el('div','box','<b>Journal d’audit</b>');const u=el('ul');(S.audit.slice(0,8)).forEach(a=>u.append(tx('li',a)));if(!S.audit.length)u.append(tx('li','Aucune action enregistrée.'));b.append(u);bot('a',b)}
  else if(/impact/.test(q))bot('a',impact());
@@ -324,7 +348,7 @@ function notaryCard(){const x=S.parcel||PARCELLES[0],it=S.items.find(i=>i.t=='Ve
 function notaryList(k){if(S.land=='notaire')bot(k,'1 dossier de mutation à signer :').append(notaryCard());else bot(k,'Aucun acte en attente. Les dossiers de mutation apparaîtront ici après vérification.')}
 /* envoi */
 async function send(k,t){const p=P[k];t=t.trim();if(!t||p.busy)return;p.busy=true;me(k,t);const q=t.toLowerCase();
- try{if(k=='u')await FL[/bepc/.test(q)?'bepc':/voyag|passeport/.test(q)?'travel':/parcelle|vend|terrain/.test(q)?'land':/casier/.test(q)?'casier':'other'](q);
+ try{if(k=='u')await FL[/bepc/.test(q)?'bepc':/signature|signatur|empreinte|\b(cip|anip)\b/.test(q)?'sign':/voyag|passeport/.test(q)?'travel':/parcelle|vend|terrain/.test(q)?'land':'other'](q);
   else if(k=='a')agentRoute(q);else notaryList('n')}finally{p.busy=false;renderNav()}}
 /* navigation */
 function renderNav(){const C=$('#conversations');C.innerHTML='';const p=P[S.role];$('#nwb').disabled=!!(p&&p.busy);
@@ -337,7 +361,7 @@ function renderNav(){const C=$('#conversations');C.innerHTML='';const p=P[S.role
 function show(k){S.role=k;const r=R[k];$('#auth').hidden=true;$('#app').hidden=false;
  for(const x in P)P[x].pn.hidden=x!=k;document.body.dataset.role=k;$('#meAv').textContent=r.name.split(' ').map(w=>w[0]).slice(0,2).join('');$('#meN').textContent=r.name;$('#meR').textContent=r.chip;$('#ttl').textContent=r.ttl;$('#chip').textContent=r.chip;$('#lt').textContent=r.lt;renderNav();
  if(k!='u'&&!P[k].seen){P[k].seen=true;k=='a'?listCases('a'):notaryList('n')}
- if(k=='u'&&!P.u.seen&&S.items.length){const statuses=S.items.map(i=>i.t+' : '+i.s).join(' ; ');bot('u','État enregistré de vos démarches : '+statuses+(S.landDecision?' | Décision de l’agent : '+S.landDecision.message:''))}
+ if(k=='u'&&!P.u.seen&&S.items.length){const statuses=S.items.map(i=>i.t+' : '+i.s).join(' ; ');bot('u','État enregistré de vos démarches : '+statuses+(S.landDecision?' | Décision de l’agent : '+S.landDecision.message:''));if(S.sign?.signatureDone)bot('u','Votre empreinte a été vérifiée et votre signature est enregistrée.')}
  P[k].seen=true;P[k].ta.focus()}
 $('#nwb').onclick=()=>{if(!S.role||P[S.role].busy)return;createConversation(S.role);setMenu(false)};
 $('#out').onclick=()=>{setMenu(false);$('#app').hidden=true;$('#auth').hidden=false;delete document.body.dataset.role;step=0;$('#aid').value='';$('#aotp').value='';S.role=null;for(const k in P){resetConversations(k);P[k].pn.classList.add('empty');P[k].seen=false;P[k].busy=false;}saveState();draw()};
